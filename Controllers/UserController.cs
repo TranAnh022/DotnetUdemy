@@ -110,7 +110,7 @@ public class UserController : ControllerBase
         throw new Exception("Failed to Update User");
     }
 
-    [HttpDelete("GetSingleUsers/{userId}")]
+    [HttpDelete("User/{userId}")]
 
     public IActionResult DeleteUser(int userId)
     {
@@ -199,8 +199,8 @@ public class UserController : ControllerBase
                 UserId,
                 Department,
                 JobTitle
-            ) VALUES (" + userJobInfoForInsert.UserId
-                + ", '" + userJobInfoForInsert.Department
+            ) VALUES ('" + userJobInfoForInsert.UserId
+                + "', '" + userJobInfoForInsert.Department
                 + "', '" + userJobInfoForInsert.JobTitle
                 + "')";
 
