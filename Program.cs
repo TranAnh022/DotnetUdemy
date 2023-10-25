@@ -31,7 +31,7 @@ builder.Services.AddCors((option) =>
         });
     });
 
-builder.Services.AddScoped<IUserRepository, UserRepository>(); //add scope call for repositoty
+builder.Services.AddScoped<IUserRepository, UserRepository>(); //add scope call for repositoty uisng for EF framework
 
 // we need to add JWTBearer package to inform the app that we use jwtbearer for authentication
 string? tokenKeyString = builder.Configuration.GetSection("AppSettings:TokenKey").Value;
