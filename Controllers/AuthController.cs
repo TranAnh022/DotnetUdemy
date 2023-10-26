@@ -1,13 +1,12 @@
 using System.Data;
+using AutoMapper;
 using Dapper;
 using DotnetAPI.Data;
 using DotnetAPI.Dtos;
 using DotnetAPI.Helpers;
+using DotnetAPI.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
-
 
 
 namespace DotnetAPI.Controllers
@@ -21,11 +20,22 @@ namespace DotnetAPI.Controllers
 
                 private readonly AuthHelper _authHelper;
 
+                private readonly ReusableSql _reusableSql;
+
+                private readonly IMapper _mapper;
+
                 public AuthController(IConfiguration config)
                 {
                         _dapper = new DataContextDapper(config);
 
                         _authHelper = new AuthHelper(config);
+
+                        _reusableSql = new ReusableSql(config);
+
+                        _mapper = new Mapper(new MapperConfiguration(cfg =>
+                        {
+                                cfg.CreateMap<UserForRegistrationDto, UserComplete>();
+                        })); //AutoMapper is used to map properties from one object to another when the property names and types match
                 }
 
                 [AllowAnonymous]
@@ -48,19 +58,10 @@ namespace DotnetAPI.Controllers
 
                                         if (_authHelper.SetPassword(userForSetPassword))
                                         {
-                                                string sql = @"EXEC TutorialAppSchema.spUser_Upsert
-                                                        @FirstName = '" + userForRegitation.FirstName +
-                                                        "', @LastName = '" + userForRegitation.LastName +
-                                                        "', @Email = '" + userForRegitation.Email +
-                                                        "', @Gender = '" + userForRegitation.Gender +
-                                                        "', @Active = 1" +
-                                                        ", @JobTitle= '" + userForRegitation.JobTitle +
-                                                        "', @Department = '" + userForRegitation.Department +
-                                                        "', @Salary =" + userForRegitation.Salary;
-
-                                                Console.WriteLine(sql);
-
-                                                if (_dapper.ExecuteSql(sql))
+                                                //AutoMapper helps streamline the process of transferring data between objects with similar property names and types.
+                                                UserComplete userComplete = _mapper.Map<UserComplete>(userForRegitation);
+                                                userComplete.Active = true;
+                                                if (_reusableSql.UpsertUser(userComplete))
                                                 {
                                                         return Ok();
                                                 }
@@ -130,7 +131,7 @@ namespace DotnetAPI.Controllers
                 public string RefreshToken()
 
                 {
-                        //FindFirst method retrieves the first claim with the specified claim type. 
+                        //FindFirst method retrieves the first claim with the specified claim type.
                         string sqlGetUserId = @"SELECT [UserId] FROM TutorialAppSchema.Users WHERE UserId= '" + User.FindFirst("userId")?.Value + "' ";
 
                         int userId = _dapper.LoadDataSingle<int>(sqlGetUserId);
